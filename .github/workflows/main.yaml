@@ -35,6 +35,12 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Clean Gradle Cache
+        run: |
+          rm -rf ~/.gradle/caches/transforms-*
+          rm -rf ~/.gradle/caches/journal-*
+          rm -rf ~/.gradle/caches/odules-*
+
       - name: Build melonDS Android
         env:
           MELONDS_KEYSTORE: ${{ secrets.MELONDS_KEYSTORE }}
