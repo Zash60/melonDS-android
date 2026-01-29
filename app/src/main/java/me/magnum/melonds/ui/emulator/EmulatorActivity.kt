@@ -480,7 +480,7 @@ class EmulatorActivity : AppCompatActivity(), Choreographer.FrameCallback {
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.toastEvent.collectLatest {
-                    val (message, duration) = when (it) {
+                    val toastInfo: Pair<Int, Int> = when (it) {
                         ToastEvent.GbaLoadFailed -> R.string.error_load_gba_rom to Toast.LENGTH_SHORT
                         ToastEvent.QuickSaveSuccessful -> R.string.saved to Toast.LENGTH_SHORT
                         ToastEvent.QuickLoadSuccessful -> R.string.loaded to Toast.LENGTH_SHORT
@@ -502,8 +502,10 @@ class EmulatorActivity : AppCompatActivity(), Choreographer.FrameCallback {
                         ToastEvent.PlaybackStarted -> R.string.tas_playback_started to Toast.LENGTH_SHORT
                         ToastEvent.PlaybackStopped -> R.string.tas_playback_stopped to Toast.LENGTH_SHORT
                         ToastEvent.NoRecordingToPlayBack -> R.string.tas_no_recording_to_playback to Toast.LENGTH_SHORT
+                        ToastEvent.UnknownError -> R.string.unknown_error to Toast.LENGTH_SHORT
                         else -> R.string.unknown_error to Toast.LENGTH_SHORT
                     }
+                    val (message, duration) = toastInfo
 
                     Toast.makeText(this@EmulatorActivity, message, duration).show()
                 }

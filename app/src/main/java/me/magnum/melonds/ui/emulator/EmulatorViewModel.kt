@@ -481,7 +481,7 @@ class EmulatorViewModel @Inject constructor(
 
     fun loadStateFromSlot(slot: SaveStateSlot) {
         if (!slot.exists) {
-            _toastEvent.tryEmit(ToastEvent.StateStateDoesNotExist)
+            _toastEvent.tryEmit(ToastEvent.StateDoesNotExist)
         } else {
             sessionCoroutineScope.launch {
                 (_emulatorState.value as? EmulatorState.RunningRom)?.let {

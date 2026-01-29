@@ -47,6 +47,7 @@
     <string name="title_emulator_running">Emulator running</string>
     <string name="message_stop_emulation">Stop emulation and load new ROM?</string>
     <string name="error_load_gba_rom">Could not load GBA ROM</string>
+    <string name="unknown_error">An unknown error occurred</string>
     <string name="action_search_roms">Search ROMs</string>
     <string name="action_sort_roms">Sort ROMs</string>
     <string name="action_boot_firmware">Boot firmware</string>

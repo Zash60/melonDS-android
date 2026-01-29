@@ -23,4 +23,5 @@ sealed class ToastEvent {
     data object PlaybackStarted : ToastEvent()
     data object PlaybackStopped : ToastEvent()
     data object NoRecordingToPlayBack : ToastEvent()
+    data object UnknownError : ToastEvent()
 }
