@@ -1,6 +1,7 @@
 package me.magnum.melonds.ui.emulator
 
 import android.app.Application
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -103,6 +104,7 @@ class EmulatorViewModel @Inject constructor(
     private val uiLayoutProvider: UILayoutProvider,
     private val emulatorManager: EmulatorManager,
     private val emulatorSession: EmulatorSession,
+    private val context: Context,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -571,7 +573,6 @@ class EmulatorViewModel @Inject constructor(
                 _isInputRecording.value = false
                 _toastEvent.tryEmit(ToastEvent.RecordingStopped)
             } else {
-                val context = getApplication<Application>()
                 val recordingPath = context.filesDir.absolutePath + "/tas_recording_${System.currentTimeMillis()}.tas"
                 MelonEmulator.startInputRecording(recordingPath)
                 _isInputRecording.value = true

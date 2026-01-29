@@ -488,7 +488,7 @@ class EmulatorActivity : AppCompatActivity(), Choreographer.FrameCallback {
                         ToastEvent.RewindNotAvailableWhileRAHardcoreModeEnabled -> R.string.rewind_unavailable_ra_hardcore_enabled to Toast.LENGTH_LONG
                         ToastEvent.StateLoadFailed -> R.string.failed_load_state to Toast.LENGTH_SHORT
                         ToastEvent.StateSaveFailed -> R.string.failed_save_state to Toast.LENGTH_SHORT
-                        ToastEvent.StateStateDoesNotExist -> R.string.cant_load_empty_slot to Toast.LENGTH_SHORT
+                        ToastEvent.StateDoesNotExist -> R.string.cant_load_empty_slot to Toast.LENGTH_SHORT
                         ToastEvent.CannotUseSaveStatesWhenRAHardcoreIsEnabled -> R.string.save_states_unavailable_ra_hardcore_enabled to Toast.LENGTH_LONG
                         ToastEvent.CannotLoadStateWhenRunningFirmware,
                         ToastEvent.CannotSaveStateWhenRunningFirmware -> R.string.save_states_not_supported to Toast.LENGTH_LONG
@@ -502,6 +502,7 @@ class EmulatorActivity : AppCompatActivity(), Choreographer.FrameCallback {
                         ToastEvent.PlaybackStarted -> R.string.tas_playback_started to Toast.LENGTH_SHORT
                         ToastEvent.PlaybackStopped -> R.string.tas_playback_stopped to Toast.LENGTH_SHORT
                         ToastEvent.NoRecordingToPlayBack -> R.string.tas_no_recording_to_playback to Toast.LENGTH_SHORT
+                        else -> R.string.unknown_error to Toast.LENGTH_SHORT
                     }
 
                     Toast.makeText(this@EmulatorActivity, message, duration).show()
