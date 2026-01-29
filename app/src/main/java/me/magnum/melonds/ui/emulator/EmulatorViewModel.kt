@@ -653,7 +653,7 @@ class EmulatorViewModel @Inject constructor(
         }
     }
 
-    fun deleteSaveStateSlot(slot: SaveStateSlot): List<SaveStateSlot>?
+    fun deleteSaveStateSlot(slot: SaveStateSlot): List<SaveStateSlot>? {
         return (_emulatorState.value as? EmulatorState.RunningRom)?.let {
             saveStatesRepository.deleteRomSaveState(it.rom, slot)
             getRomSaveStateSlots(it.rom)
