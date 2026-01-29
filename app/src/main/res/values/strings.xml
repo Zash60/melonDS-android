@@ -90,6 +90,7 @@
     <string name="no_dsiware_roms_found">No DSiWare ROMs found</string>
 
     <string name="info_fps">FPS: %1$d</string>
+    <string name="info_frame">Frame: %1$d</string>
     <string name="info_play_time_hours_minutes">Play time: %1$dh %2$dm</string> <!-- Ex: 4h 28m -->
     <string name="info_play_time_minutes">Play time: %1$dm</string> <!-- Ex: 28m -->
     <string name="info_loading">LOADING…</string>
@@ -355,6 +356,44 @@
     <string name="input_swap_screens">Swap Screens</string>
     <string name="input_quick_save">Quick Save</string>
     <string name="input_quick_load">Quick Load</string>
+
+    <!-- TAS Input Strings -->
+    <string name="input_frame_advance">Frame Advance</string>
+    <string name="input_tas_pause">TAS Pause</string>
+    <string name="input_tas_resume">TAS Resume</string>
+    <string name="input_record_input">Record Input</string>
+    <string name="input_playback_input">Playback Input</string>
+    <string name="input_frame_counter">Frame Counter</string>
+
+    <!-- Save/Load Slot Input Strings -->
+    <string name="input_save_slot_1">Save Slot 1</string>
+    <string name="input_save_slot_2">Save Slot 2</string>
+    <string name="input_save_slot_3">Save Slot 3</string>
+    <string name="input_save_slot_4">Save Slot 4</string>
+    <string name="input_save_slot_5">Save Slot 5</string>
+    <string name="input_save_slot_6">Save Slot 6</string>
+    <string name="input_save_slot_7">Save Slot 7</string>
+    <string name="input_save_slot_8">Save Slot 8</string>
+    <string name="input_save_slot_9">Save Slot 9</string>
+    <string name="input_load_slot_1">Load Slot 1</string>
+    <string name="input_load_slot_2">Load Slot 2</string>
+    <string name="input_load_slot_3">Load Slot 3</string>
+    <string name="input_load_slot_4">Load Slot 4</string>
+    <string name="input_load_slot_5">Load Slot 5</string>
+    <string name="input_load_slot_6">Load Slot 6</string>
+    <string name="input_load_slot_7">Load Slot 7</string>
+    <string name="input_load_slot_8">Load Slot 8</string>
+    <string name="input_load_slot_9">Load Slot 9</string>
+
+    <!-- TAS Toast Messages -->
+    <string name="tas_save_state_successful">State saved to slot</string>
+    <string name="tas_save_state_failed">Failed to save state</string>
+    <string name="tas_load_state_successful">State loaded from slot</string>
+    <string name="tas_recording_started">Recording started</string>
+    <string name="tas_recording_stopped">Recording stopped</string>
+    <string name="tas_playback_started">Playback started</string>
+    <string name="tas_playback_stopped">Playback stopped</string>
+    <string name="tas_no_recording_to_playback">No recording to play back</string>
 
     <string name="layouts">Layouts</string>
     <string name="layouts_summary">Manage custom layout configurations</string>

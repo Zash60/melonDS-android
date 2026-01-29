@@ -135,6 +135,22 @@ class EmulatorViewModel @Inject constructor(
     private val _currentFps = MutableStateFlow<Int?>(null)
     val currentFps = _currentFps.asStateFlow()
 
+    // TAS state
+    private val _isTasPaused = MutableStateFlow(false)
+    val isTasPaused = _isTasPaused.asStateFlow()
+
+    private val _currentFrame = MutableStateFlow(0L)
+    val currentFrame = _currentFrame.asStateFlow()
+
+    private val _isInputRecording = MutableStateFlow(false)
+    val isInputRecording = _isInputRecording.asStateFlow()
+
+    private val _isInputPlayback = MutableStateFlow(false)
+    val isInputPlayback = _isInputPlayback.asStateFlow()
+
+    private val _isFrameCounterVisible = MutableStateFlow(false)
+    val isFrameCounterVisible = _isFrameCounterVisible.asStateFlow()
+
     private val _toastEvent = EventSharedFlow<ToastEvent>()
     val toastEvent = _toastEvent.asSharedFlow()
 
@@ -523,7 +539,121 @@ class EmulatorViewModel @Inject constructor(
         }
     }
 
-    fun deleteSaveStateSlot(slot: SaveStateSlot): List<SaveStateSlot>? {
+    // TAS Methods
+    fun doFrameAdvance() {
+        if (_emulatorState.value.isRunning()) {
+            _isTasPaused.value = true
+            MelonEmulator.pauseEmulationForTAS()
+            // Advance one frame
+            MelonEmulator.advanceFrame()
+            _currentFrame.value = MelonEmulator.getCurrentFrame()
+        }
+    }
+
+    fun pauseEmulatorForTAS() {
+        if (_emulatorState.value.isRunning()) {
+            _isTasPaused.value = true
+            MelonEmulator.pauseEmulationForTAS()
+        }
+    }
+
+    fun resumeEmulatorFromTAS() {
+        if (_emulatorState.value.isRunning() && _isTasPaused.value) {
+            _isTasPaused.value = false
+            MelonEmulator.resumeEmulationFromTAS()
+        }
+    }
+
+    fun toggleInputRecording() {
+        if (_emulatorState.value.isRunning()) {
+            if (_isInputRecording.value) {
+                MelonEmulator.stopInputRecording()
+                _isInputRecording.value = false
+                _toastEvent.tryEmit(ToastEvent.RecordingStopped)
+            } else {
+                val context = android.app.Application()
+                val recordingPath = context.filesDir.absolutePath + "/tas_recording_${System.currentTimeMillis()}.tas"
+                MelonEmulator.startInputRecording(recordingPath)
+                _isInputRecording.value = true
+                _toastEvent.tryEmit(ToastEvent.RecordingStarted)
+            }
+        }
+    }
+
+    fun toggleInputPlayback() {
+        if (_emulatorState.value.isRunning()) {
+            if (_isInputPlayback.value) {
+                MelonEmulator.stopInputPlayback()
+                _isInputPlayback.value = false
+                _toastEvent.tryEmit(ToastEvent.PlaybackStopped)
+            } else {
+                // In a real implementation, you'd need to show a file picker
+                // For now, this is a placeholder
+                _toastEvent.tryEmit(ToastEvent.NoRecordingToPlayBack)
+            }
+        }
+    }
+
+    fun toggleFrameCounter() {
+        _isFrameCounterVisible.value = !_isFrameCounterVisible.value
+    }
+
+    fun updateFrameCounter() {
+        if (_isTasPaused.value || _isFrameCounterVisible.value) {
+            _currentFrame.value = MelonEmulator.getCurrentFrame()
+        }
+    }
+
+    // Save/Load Slot Methods
+    fun saveStateToSlotNumber(slot: Int) {
+        val currentState = _emulatorState.value
+        when (currentState) {
+            is EmulatorState.RunningRom -> {
+                sessionCoroutineScope.launch(Dispatchers.IO) {
+                    val saveStateSlot = SaveStateSlot(slot, false, null, null)
+                    if (saveRomState(currentState.rom, saveStateSlot)) {
+                        _toastEvent.emit(ToastEvent.SaveStateSuccessful)
+                    } else {
+                        _toastEvent.emit(ToastEvent.SaveStateFailed)
+                    }
+                }
+            }
+            is EmulatorState.RunningFirmware -> {
+                _toastEvent.tryEmit(ToastEvent.CannotSaveStateWhenRunningFirmware)
+            }
+            else -> {
+                // Do nothing
+            }
+        }
+    }
+
+    fun loadStateFromSlotNumber(slot: Int) {
+        val currentState = _emulatorState.value
+        when (currentState) {
+            is EmulatorState.RunningRom -> {
+                if (emulatorSession.areSaveStateLoadsAllowed()) {
+                    sessionCoroutineScope.launch {
+                        val saveStateSlot = SaveStateSlot(slot, false, null, null)
+                        if (loadRomState(currentState.rom, saveStateSlot)) {
+                            _toastEvent.emit(ToastEvent.LoadStateSuccessful)
+                        } else {
+                            _toastEvent.emit(ToastEvent.StateStateDoesNotExist)
+                        }
+                    }
+                } else {
+                    _toastEvent.tryEmit(ToastEvent.CannotUseSaveStatesWhenRAHardcoreIsEnabled)
+                }
+            }
+            is EmulatorState.RunningFirmware -> {
+                _toastEvent.tryEmit(ToastEvent.CannotLoadStateWhenRunningFirmware)
+            }
+            else -> {
+                // Do nothing
+            }
+        }
+    }
+
+    fun deleteSaveStateSlot(slot: SaveStateSlot): List<SaveStateSlot>?
         return (_emulatorState.value as? EmulatorState.RunningRom)?.let {
             saveStatesRepository.deleteRomSaveState(it.rom, slot)
             getRomSaveStateSlots(it.rom)

@@ -130,5 +130,26 @@ object MelonEmulator {
 
     external fun setMicrophoneEnabled(enabled: Boolean)
 
+    // TAS functions
+    external fun pauseEmulationForTAS()
+
+    external fun resumeEmulationFromTAS()
+
+    external fun advanceFrame(): Boolean
+
+    external fun getCurrentFrame(): Long
+
+    external fun startInputRecording(path: String)
+
+    external fun stopInputRecording()
+
+    external fun startInputPlayback(path: String)
+
+    external fun stopInputPlayback()
+
+    external fun isInputRecording(): Boolean
+
+    external fun isInputPlayback(): Boolean
+
     external fun updateEmulatorConfiguration(emulatorConfiguration: EmulatorConfiguration)
 }

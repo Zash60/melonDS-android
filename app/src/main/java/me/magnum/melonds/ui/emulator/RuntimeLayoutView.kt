@@ -108,6 +108,33 @@ class RuntimeLayoutView(context: Context, attrs: AttributeSet? = null) : LayoutV
             getLayoutComponentView(LayoutComponent.BUTTON_QUICK_SAVE)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.QUICK_SAVE, enableHapticFeedback, touchVibrator))
             getLayoutComponentView(LayoutComponent.BUTTON_QUICK_LOAD)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.QUICK_LOAD, enableHapticFeedback, touchVibrator))
             getLayoutComponentView(LayoutComponent.BUTTON_REWIND)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.REWIND, enableHapticFeedback, touchVibrator))
+
+            // TAS input handlers
+            getLayoutComponentView(LayoutComponent.BUTTON_FRAME_ADVANCE)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.FRAME_ADVANCE, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_TAS_PAUSE)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.TAS_PAUSE, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_TAS_RESUME)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.TAS_RESUME, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_RECORD_INPUT)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.RECORD_INPUT, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_PLAYBACK_INPUT)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.PLAYBACK_INPUT, enableHapticFeedback, touchVibrator))
+
+            // Save/Load slot input handlers
+            getLayoutComponentView(LayoutComponent.BUTTON_SAVE_SLOT_1)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.SAVE_SLOT_1, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_SAVE_SLOT_2)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.SAVE_SLOT_2, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_SAVE_SLOT_3)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.SAVE_SLOT_3, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_SAVE_SLOT_4)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.SAVE_SLOT_4, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_SAVE_SLOT_5)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.SAVE_SLOT_5, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_SAVE_SLOT_6)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.SAVE_SLOT_6, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_SAVE_SLOT_7)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.SAVE_SLOT_7, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_SAVE_SLOT_8)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.SAVE_SLOT_8, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_SAVE_SLOT_9)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.SAVE_SLOT_9, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_LOAD_SLOT_1)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.LOAD_SLOT_1, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_LOAD_SLOT_2)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.LOAD_SLOT_2, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_LOAD_SLOT_3)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.LOAD_SLOT_3, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_LOAD_SLOT_4)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.LOAD_SLOT_4, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_LOAD_SLOT_5)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.LOAD_SLOT_5, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_LOAD_SLOT_6)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.LOAD_SLOT_6, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_LOAD_SLOT_7)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.LOAD_SLOT_7, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_LOAD_SLOT_8)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.LOAD_SLOT_8, enableHapticFeedback, touchVibrator))
+            getLayoutComponentView(LayoutComponent.BUTTON_LOAD_SLOT_9)?.view?.setOnTouchListener(SingleButtonInputHandler(it, Input.LOAD_SLOT_9, enableHapticFeedback, touchVibrator))
         }
 
         getLayoutComponentViews().forEach {

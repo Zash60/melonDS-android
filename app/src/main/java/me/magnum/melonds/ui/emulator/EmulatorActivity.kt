@@ -233,6 +233,40 @@ class EmulatorActivity : AppCompatActivity(), Choreographer.FrameCallback {
         override fun onRewind() {
             viewModel.onOpenRewind()
         }
+
+        // TAS methods
+        override fun onFrameAdvancePressed() {
+            viewModel.doFrameAdvance()
+        }
+
+        override fun onTASPausePressed() {
+            viewModel.pauseEmulatorForTAS()
+        }
+
+        override fun onTASResumePressed() {
+            viewModel.resumeEmulatorFromTAS()
+        }
+
+        override fun onRecordInputPressed() {
+            viewModel.toggleInputRecording()
+        }
+
+        override fun onPlaybackInputPressed() {
+            viewModel.toggleInputPlayback()
+        }
+
+        override fun onFrameCounterPressed() {
+            viewModel.toggleFrameCounter()
+        }
+
+        // Save/Load slot methods
+        override fun onSaveSlotPressed(slot: Int) {
+            viewModel.saveStateToSlotNumber(slot)
+        }
+
+        override fun onLoadSlotPressed(slot: Int) {
+            viewModel.loadStateFromSlotNumber(slot)
+        }
     }
     private val settingsLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         viewModel.onSettingsChanged()
@@ -431,6 +465,20 @@ class EmulatorActivity : AppCompatActivity(), Choreographer.FrameCallback {
         }
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.currentFrame.collectLatest {
+                    binding.textFrameCounter.text = getString(R.string.info_frame, it)
+                }
+            }
+        }
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.isFrameCounterVisible.collectLatest { isVisible ->
+                    binding.textFrameCounter.isVisible = isVisible
+                }
+            }
+        }
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.toastEvent.collectLatest {
                     val (message, duration) = when (it) {
                         ToastEvent.GbaLoadFailed -> R.string.error_load_gba_rom to Toast.LENGTH_SHORT
@@ -445,6 +493,15 @@ class EmulatorActivity : AppCompatActivity(), Choreographer.FrameCallback {
                         ToastEvent.CannotLoadStateWhenRunningFirmware,
                         ToastEvent.CannotSaveStateWhenRunningFirmware -> R.string.save_states_not_supported to Toast.LENGTH_LONG
                         ToastEvent.CannotSwitchRetroAchievementsMode -> R.string.retro_achievements_relaunch_to_apply_settings to Toast.LENGTH_LONG
+                        // TAS Toast Events
+                        ToastEvent.SaveStateSuccessful -> R.string.tas_save_state_successful to Toast.LENGTH_SHORT
+                        ToastEvent.SaveStateFailed -> R.string.tas_save_state_failed to Toast.LENGTH_SHORT
+                        ToastEvent.LoadStateSuccessful -> R.string.tas_load_state_successful to Toast.LENGTH_SHORT
+                        ToastEvent.RecordingStarted -> R.string.tas_recording_started to Toast.LENGTH_SHORT
+                        ToastEvent.RecordingStopped -> R.string.tas_recording_stopped to Toast.LENGTH_SHORT
+                        ToastEvent.PlaybackStarted -> R.string.tas_playback_started to Toast.LENGTH_SHORT
+                        ToastEvent.PlaybackStopped -> R.string.tas_playback_stopped to Toast.LENGTH_SHORT
+                        ToastEvent.NoRecordingToPlayBack -> R.string.tas_no_recording_to_playback to Toast.LENGTH_SHORT
                     }
 
                     Toast.makeText(this@EmulatorActivity, message, duration).show()

@@ -35,6 +35,15 @@
             tools:text="FPS: 60"/>
 
     <TextView
+            android:id="@+id/textFrameCounter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:textColor="@android:color/white"
+            android:visibility="gone"
+            tools:text="Frame: 12345"/>
+
+    <TextView
             android:id="@+id/textLoading"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
