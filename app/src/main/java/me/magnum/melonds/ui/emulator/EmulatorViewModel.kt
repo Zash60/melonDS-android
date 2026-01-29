@@ -1,5 +1,6 @@
 package me.magnum.melonds.ui.emulator
 
+import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -544,7 +545,6 @@ class EmulatorViewModel @Inject constructor(
         if (_emulatorState.value.isRunning()) {
             _isTasPaused.value = true
             MelonEmulator.pauseEmulationForTAS()
-            // Advance one frame
             MelonEmulator.advanceFrame()
             _currentFrame.value = MelonEmulator.getCurrentFrame()
         }
@@ -571,7 +571,7 @@ class EmulatorViewModel @Inject constructor(
                 _isInputRecording.value = false
                 _toastEvent.tryEmit(ToastEvent.RecordingStopped)
             } else {
-                val context = android.app.Application()
+                val context = getApplication<Application>()
                 val recordingPath = context.filesDir.absolutePath + "/tas_recording_${System.currentTimeMillis()}.tas"
                 MelonEmulator.startInputRecording(recordingPath)
                 _isInputRecording.value = true
@@ -637,7 +637,7 @@ class EmulatorViewModel @Inject constructor(
                         if (loadRomState(currentState.rom, saveStateSlot)) {
                             _toastEvent.emit(ToastEvent.LoadStateSuccessful)
                         } else {
-                            _toastEvent.emit(ToastEvent.StateStateDoesNotExist)
+                            _toastEvent.emit(ToastEvent.StateDoesNotExist)
                         }
                     }
                 } else {
@@ -672,7 +672,10 @@ class EmulatorViewModel @Inject constructor(
     }
 
     private suspend fun loadRomState(rom: Rom, slot: SaveStateSlot): Boolean {
-        if (!slot.exists) {
+        // Check if the save state exists in the repository
+        val existingSlots = saveStatesRepository.getRomSaveStates(rom)
+        val slotExists = existingSlots.any { it.slot == slot.slot && it.exists }
+        if (!slotExists) {
             return false
         }
 

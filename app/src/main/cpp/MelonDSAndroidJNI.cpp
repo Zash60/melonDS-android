@@ -8,6 +8,9 @@
 #include <unistd.h>
 #include <cstdlib>
 #include <time.h>
+#include <fstream>
+#include <vector>
+#include <atomic>
 #include <MelonDS.h>
 #include <RomGbaSlotConfig.h>
 #include <android/asset_manager_jni.h>
@@ -46,6 +49,32 @@ int targetFps;
 float fastForwardSpeedMultiplier;
 bool limitFps = true;
 bool isFastForwardEnabled = false;
+
+// TAS variables
+std::atomic_ulong tasFrameCounter{0};
+std::atomic_bool tasPaused{false};
+std::atomic_bool tasFrameAdvancePending{false};
+std::atomic_bool tasInputRecording{false};
+std::atomic_bool tasInputPlayback{false};
+std::ofstream tasRecordingFile;
+std::ifstream tasPlaybackFile;
+pthread_mutex_t tasMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t tasCond = PTHREAD_COND_INITIALIZER;
+
+// TAS Input structure
+struct TASInput {
+    uint32_t frame;
+    uint32_t key;       // Key code (0 = no key, 1-14 = buttons, 100+ = touch)
+    bool pressed;       // true = press, false = release
+    int16_t touchX;     // Touch X coordinate (-1 if not touch)
+    int16_t touchY;     // Touch Y coordinate (-1 if not touch)
+};
+
+// Current input state for playback
+std::atomic_uint32_t tasPlaybackKeyState{0};
+std::atomic_int16_t tasPlaybackTouchX{-1};
+std::atomic_int16_t tasPlaybackTouchY{-1};
+std::atomic_bool tasPlaybackTouching{false};
 
 jobject globalCameraManager;
 jobject androidRaCallback;
@@ -444,28 +473,141 @@ Java_me_magnum_melonds_MelonEmulator_stopEmulation(JNIEnv* env, jobject thiz)
     delete raCallback;
 }
 
+// Helper function to record TAS input
+void recordTASInput(uint32_t key, bool pressed, int16_t touchX = -1, int16_t touchY = -1) {
+    if (!tasInputRecording.load() || !tasRecordingFile.is_open())
+        return;
+    
+    TASInput input;
+    input.frame = tasFrameCounter.load();
+    input.key = key;
+    input.pressed = pressed;
+    input.touchX = touchX;
+    input.touchY = touchY;
+    
+    pthread_mutex_lock(&tasMutex);
+    if (tasRecordingFile.is_open()) {
+        tasRecordingFile.write(reinterpret_cast<const char*>(&input), sizeof(TASInput));
+    }
+    pthread_mutex_unlock(&tasMutex);
+}
+
+// Helper function to apply playback input
+void applyTASPlaybackInput() {
+    if (!tasInputPlayback.load() || !tasPlaybackFile.is_open())
+        return;
+    
+    uint32_t currentFrame = tasFrameCounter.load();
+    
+    pthread_mutex_lock(&tasMutex);
+    
+    // First pass: read all inputs for current frame into a buffer
+    std::vector<TASInput> frameInputs;
+    
+    while (tasPlaybackFile.good() && !tasPlaybackFile.eof()) {
+        std::streampos pos = tasPlaybackFile.tellg();
+        TASInput input;
+        tasPlaybackFile.read(reinterpret_cast<char*>(&input), sizeof(TASInput));
+        
+        // Check if read was successful
+        if (tasPlaybackFile.gcount() != sizeof(TASInput)) {
+            break;
+        }
+        
+        if (input.frame == currentFrame) {
+            frameInputs.push_back(input);
+        } else if (input.frame > currentFrame) {
+            // Future frame, seek back and stop
+            tasPlaybackFile.seekg(pos);
+            break;
+        }
+        // If past frame, continue reading to find current frame
+    }
+    
+    // Second pass: apply inputs while respecting current state
+    for (const auto& input : frameInputs) {
+        if (input.key < 100) {
+            // Button input
+            bool isCurrentlyPressed = (tasPlaybackKeyState.load() & (1 << input.key)) != 0;
+            
+            if (input.pressed && !isCurrentlyPressed) {
+                MelonDSAndroid::pressKey(input.key);
+                tasPlaybackKeyState |= (1 << input.key);
+            } else if (!input.pressed && isCurrentlyPressed) {
+                MelonDSAndroid::releaseKey(input.key);
+                tasPlaybackKeyState &= ~(1 << input.key);
+            }
+            // If state matches, don't re-apply
+        } else if (input.key == 100) {
+            // Touch input
+            if (input.pressed) {
+                // Only touch if not already touching or if position changed
+                if (!tasPlaybackTouching.load() ||
+                    tasPlaybackTouchX.load() != input.touchX ||
+                    tasPlaybackTouchY.load() != input.touchY) {
+                    MelonDSAndroid::touchScreen(input.touchX, input.touchY);
+                    tasPlaybackTouching = true;
+                    tasPlaybackTouchX = input.touchX;
+                    tasPlaybackTouchY = input.touchY;
+                }
+            } else {
+                if (tasPlaybackTouching.load()) {
+                    MelonDSAndroid::releaseScreen();
+                    tasPlaybackTouching = false;
+                }
+            }
+        }
+    }
+    
+    pthread_mutex_unlock(&tasMutex);
+}
+
 JNIEXPORT void JNICALL
 Java_me_magnum_melonds_MelonEmulator_onScreenTouch(JNIEnv* env, jobject thiz, jint x, jint y)
 {
-    MelonDSAndroid::touchScreen(x, y);
+    // Record if TAS recording is active (key 100 = touch)
+    recordTASInput(100, true, (int16_t)x, (int16_t)y);
+    
+    // Apply the input (unless in playback mode where inputs come from file)
+    if (!tasInputPlayback.load()) {
+        MelonDSAndroid::touchScreen(x, y);
+    }
 }
 
 JNIEXPORT void JNICALL
 Java_me_magnum_melonds_MelonEmulator_onScreenRelease(JNIEnv* env, jobject thiz)
 {
-    MelonDSAndroid::releaseScreen();
+    // Record if TAS recording is active (key 100 = touch)
+    recordTASInput(100, false);
+    
+    // Apply the input (unless in playback mode where inputs come from file)
+    if (!tasInputPlayback.load()) {
+        MelonDSAndroid::releaseScreen();
+    }
 }
 
 JNIEXPORT void JNICALL
 Java_me_magnum_melonds_MelonEmulator_onKeyPress(JNIEnv* env, jobject thiz, jint key)
 {
-    MelonDSAndroid::pressKey(key);
+    // Record if TAS recording is active
+    recordTASInput(key, true);
+    
+    // Apply the input (unless in playback mode where inputs come from file)
+    if (!tasInputPlayback.load()) {
+        MelonDSAndroid::pressKey(key);
+    }
 }
 
 JNIEXPORT void JNICALL
 Java_me_magnum_melonds_MelonEmulator_onKeyRelease(JNIEnv* env, jobject thiz, jint key)
 {
-    MelonDSAndroid::releaseKey(key);
+    // Record if TAS recording is active
+    recordTASInput(key, false);
+    
+    // Apply the input (unless in playback mode where inputs come from file)
+    if (!tasInputPlayback.load()) {
+        MelonDSAndroid::releaseKey(key);
+    }
 }
 
 JNIEXPORT void JNICALL
@@ -504,6 +646,139 @@ Java_me_magnum_melonds_MelonEmulator_updateEmulatorConfiguration(JNIEnv* env, jo
         targetFps = 60 * fastForwardSpeedMultiplier;
     }
 }
+
+// TAS functions
+JNIEXPORT void JNICALL
+Java_me_magnum_melonds_MelonEmulator_pauseEmulationForTAS(JNIEnv* env, jobject thiz)
+{
+    pthread_mutex_lock(&emuThreadMutex);
+    tasPaused = true;
+    pthread_mutex_unlock(&emuThreadMutex);
+    pthread_cond_broadcast(&emuThreadCond);
+}
+
+JNIEXPORT void JNICALL
+Java_me_magnum_melonds_MelonEmulator_resumeEmulationFromTAS(JNIEnv* env, jobject thiz)
+{
+    pthread_mutex_lock(&emuThreadMutex);
+    tasPaused = false;
+    pthread_mutex_unlock(&emuThreadMutex);
+    pthread_cond_broadcast(&emuThreadCond);
+}
+
+JNIEXPORT jboolean JNICALL
+Java_me_magnum_melonds_MelonEmulator_advanceFrame(JNIEnv* env, jobject thiz)
+{
+    if (!tasPaused.load())
+        return false;
+    
+    pthread_mutex_lock(&emuThreadMutex);
+    tasFrameAdvancePending = true;
+    pthread_cond_broadcast(&emuThreadCond);
+    pthread_mutex_unlock(&emuThreadMutex);
+    return true;
+}
+
+JNIEXPORT jlong JNICALL
+Java_me_magnum_melonds_MelonEmulator_getCurrentFrame(JNIEnv* env, jobject thiz)
+{
+    return (jlong)tasFrameCounter.load();
+}
+
+JNIEXPORT void JNICALL
+Java_me_magnum_melonds_MelonEmulator_startInputRecording(JNIEnv* env, jobject thiz, jstring path)
+{
+    pthread_mutex_lock(&tasMutex);
+    if (!tasInputRecording.load() && path != nullptr) {
+        const char* pathStr = env->GetStringUTFChars(path, nullptr);
+        if (pathStr != nullptr) {
+            tasRecordingFile.open(pathStr, std::ios::binary | std::ios::trunc);
+            if (tasRecordingFile.is_open()) {
+                tasInputRecording = true;
+                // Write header
+                uint32_t version = 1;
+                tasRecordingFile.write(reinterpret_cast<const char*>(&version), sizeof(version));
+            }
+            env->ReleaseStringUTFChars(path, pathStr);
+        }
+    }
+    pthread_mutex_unlock(&tasMutex);
+}
+
+JNIEXPORT void JNICALL
+Java_me_magnum_melonds_MelonEmulator_stopInputRecording(JNIEnv* env, jobject thiz)
+{
+    pthread_mutex_lock(&tasMutex);
+    if (tasInputRecording.load()) {
+        tasInputRecording = false;
+        if (tasRecordingFile.is_open()) {
+            tasRecordingFile.close();
+        }
+    }
+    pthread_mutex_unlock(&tasMutex);
+}
+
+JNIEXPORT void JNICALL
+Java_me_magnum_melonds_MelonEmulator_startInputPlayback(JNIEnv* env, jobject thiz, jstring path)
+{
+    pthread_mutex_lock(&tasMutex);
+    if (!tasInputPlayback.load() && path != nullptr) {
+        // Reset playback state before starting
+        tasPlaybackKeyState = 0;
+        tasPlaybackTouchX = -1;
+        tasPlaybackTouchY = -1;
+        tasPlaybackTouching = false;
+        
+        const char* pathStr = env->GetStringUTFChars(path, nullptr);
+        if (pathStr != nullptr) {
+            tasPlaybackFile.open(pathStr, std::ios::binary);
+            if (tasPlaybackFile.is_open()) {
+                // Read header
+                uint32_t version;
+                tasPlaybackFile.read(reinterpret_cast<char*>(&version), sizeof(version));
+                if (version == 1) {
+                    tasInputPlayback = true;
+                } else {
+                    tasPlaybackFile.close();
+                }
+            }
+            env->ReleaseStringUTFChars(path, pathStr);
+        }
+    }
+    pthread_mutex_unlock(&tasMutex);
+}
+
+JNIEXPORT void JNICALL
+Java_me_magnum_melonds_MelonEmulator_stopInputPlayback(JNIEnv* env, jobject thiz)
+{
+    pthread_mutex_lock(&tasMutex);
+    if (tasInputPlayback.load()) {
+        tasInputPlayback = false;
+        // Reset playback state
+        tasPlaybackKeyState = 0;
+        tasPlaybackTouchX = -1;
+        tasPlaybackTouchY = -1;
+        tasPlaybackTouching = false;
+        
+        if (tasPlaybackFile.is_open()) {
+            tasPlaybackFile.close();
+        }
+    }
+    pthread_mutex_unlock(&tasMutex);
+}
+
+JNIEXPORT jboolean JNICALL
+Java_me_magnum_melonds_MelonEmulator_isInputRecording(JNIEnv* env, jobject thiz)
+{
+    return tasInputRecording.load() ? JNI_TRUE : JNI_FALSE;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_me_magnum_melonds_MelonEmulator_isInputPlayback(JNIEnv* env, jobject thiz)
+{
+    return tasInputPlayback.load() ? JNI_TRUE : JNI_FALSE;
+}
+
 }
 
 MelonDSAndroid::RomGbaSlotConfig* buildGbaSlotConfig(GbaSlotType slotType, const char* romPath, const char* savePath)
@@ -544,11 +819,36 @@ void* emulate(void*)
     double frameLimitError = 0.0;
 
     MelonDSAndroid::start();
+    tasFrameCounter = 0;
+    
+    // Reset TAS state on new emulation start
+    tasPaused = false;
+    tasFrameAdvancePending = false;
+    tasInputRecording = false;
+    tasInputPlayback = false;
+    tasPlaybackKeyState = 0;
+    tasPlaybackTouchX = -1;
+    tasPlaybackTouchY = -1;
+    tasPlaybackTouching = false;
 
     for (;;)
     {
         pthread_mutex_lock(&emuThreadMutex);
-        if (paused) {
+        
+        // TAS pause handling
+        if (tasPaused.load()) {
+            isThreadReallyPaused = true;
+            while (tasPaused.load() && !stop && !tasFrameAdvancePending.load())
+                pthread_cond_wait(&emuThreadCond, &emuThreadMutex);
+            
+            // If frame advance was requested, process one frame
+            if (tasFrameAdvancePending.load()) {
+                tasFrameAdvancePending = false;
+            }
+            isThreadReallyPaused = false;
+        }
+        
+        if (paused && !tasPaused.load()) {
             isThreadReallyPaused = true;
             while (paused && !stop)
                 pthread_cond_wait(&emuThreadCond, &emuThreadMutex);
@@ -564,7 +864,14 @@ void* emulate(void*)
         pthread_mutex_unlock(&emuThreadMutex);
 
         MelonDSAndroid::updateMic();
+        
+        // Apply TAS playback inputs at the start of each frame
+        applyTASPlaybackInput();
+        
         u32 nLines = MelonDSAndroid::loop();
+
+        // Increment TAS frame counter
+        tasFrameCounter++;
 
         double currentTick = getCurrentMillis();
         double delay = currentTick - lastTick;
@@ -574,7 +881,7 @@ void* emulate(void*)
         if (frameTimeStep < 1)
             frameTimeStep = 1;
 
-        if (limitFps)
+        if (limitFps && !tasPaused.load())
         {
             frameLimitError += frameTimeStep - delay;
             if (frameLimitError < -frameTimeStep)
@@ -596,7 +903,7 @@ void* emulate(void*)
 
             lastTick = currentTick;
         } else {
-            if (delay < 1)
+            if (delay < 1 && !tasPaused.load())
                 usleep(1000);
 
             lastTick = getCurrentMillis();
