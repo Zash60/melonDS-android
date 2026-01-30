@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.TextView
 import me.magnum.melonds.R
 import me.magnum.melonds.domain.model.layout.LayoutComponent
+import me.magnum.melonds.ui.common.LayoutComponentViewBuilder
 
 class TextDisplayLayoutComponentViewBuilder(private val layoutComponent: LayoutComponent) : LayoutComponentViewBuilder() {
     override fun build(context: Context): View {

@@ -13,7 +13,7 @@ class RuntimeLayoutComponentViewBuilderFactory : LayoutComponentViewBuilderFacto
 
     override fun getLayoutComponentViewBuilder(layoutComponent: LayoutComponent): LayoutComponentViewBuilder {
         return layoutComponentViewBuilderCache.getOrElse(layoutComponent) {
-            val builder = when (layoutComponent) {
+            val builder: LayoutComponentViewBuilder = when (layoutComponent) {
                 LayoutComponent.TOP_SCREEN -> RuntimeScreenLayoutComponentViewBuilder()
                 LayoutComponent.BOTTOM_SCREEN -> RuntimeScreenLayoutComponentViewBuilder()
                 LayoutComponent.DPAD -> DpadLayoutComponentViewBuilder()
