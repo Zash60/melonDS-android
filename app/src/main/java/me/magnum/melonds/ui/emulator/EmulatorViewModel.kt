@@ -573,10 +573,10 @@ class EmulatorViewModel @Inject constructor(
                 _isInputRecording.value = false
                 _toastEvent.tryEmit(ToastEvent.RecordingStopped)
             } else {
-                // Use a fixed filename based on ROM serial for easier playback
+                // Use a fixed filename based on ROM filename for easier playback
                 val currentRom = (_emulatorState.value as? EmulatorState.RunningRom)?.rom
-                val romSerial = currentRom?.serial ?: "default"
-                val recordingPath = context.filesDir.absolutePath + "/tas_${romSerial}.tas"
+                val romFileName = currentRom?.fileName?.replace(".nds", "") ?: "default"
+                val recordingPath = context.filesDir.absolutePath + "/tas_${romFileName}.tas"
                 MelonEmulator.startInputRecording(recordingPath)
                 _isInputRecording.value = true
                 _toastEvent.tryEmit(ToastEvent.RecordingStarted)
@@ -591,10 +591,10 @@ class EmulatorViewModel @Inject constructor(
                 _isInputPlayback.value = false
                 _toastEvent.tryEmit(ToastEvent.PlaybackStopped)
             } else {
-                // Look for the TAS recording file based on ROM serial
+                // Look for the TAS recording file based on ROM filename
                 val currentRom = (_emulatorState.value as? EmulatorState.RunningRom)?.rom
-                val romSerial = currentRom?.serial ?: "default"
-                val tasFile = java.io.File(context.filesDir, "tas_${romSerial}.tas")
+                val romFileName = currentRom?.fileName?.replace(".nds", "") ?: "default"
+                val tasFile = java.io.File(context.filesDir, "tas_${romFileName}.tas")
                 
                 if (tasFile.exists()) {
                     MelonEmulator.startInputPlayback(tasFile.absolutePath)
