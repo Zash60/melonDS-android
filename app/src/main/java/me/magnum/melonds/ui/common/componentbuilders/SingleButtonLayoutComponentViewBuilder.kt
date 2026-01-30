@@ -32,6 +32,31 @@ class SingleButtonLayoutComponentViewBuilder(private val layoutComponent: Layout
             LayoutComponent.BUTTON_QUICK_LOAD -> R.drawable.button_quick_load
             LayoutComponent.BUTTON_REWIND -> R.drawable.button_rewind
             LayoutComponent.BUTTON_MICROPHONE_TOGGLE -> R.drawable.button_microphone
+            // TAS buttons
+            LayoutComponent.BUTTON_FRAME_ADVANCE -> R.drawable.button_frame_advance
+            LayoutComponent.BUTTON_TAS_PAUSE -> R.drawable.button_tas_pause
+            LayoutComponent.BUTTON_TAS_RESUME -> R.drawable.button_tas_resume
+            LayoutComponent.BUTTON_RECORD_INPUT -> R.drawable.button_record_input
+            LayoutComponent.BUTTON_PLAYBACK_INPUT -> R.drawable.button_playback_input
+            // Save/Load slot buttons
+            LayoutComponent.BUTTON_SAVE_SLOT_1,
+            LayoutComponent.BUTTON_SAVE_SLOT_2,
+            LayoutComponent.BUTTON_SAVE_SLOT_3,
+            LayoutComponent.BUTTON_SAVE_SLOT_4,
+            LayoutComponent.BUTTON_SAVE_SLOT_5,
+            LayoutComponent.BUTTON_SAVE_SLOT_6,
+            LayoutComponent.BUTTON_SAVE_SLOT_7,
+            LayoutComponent.BUTTON_SAVE_SLOT_8,
+            LayoutComponent.BUTTON_SAVE_SLOT_9 -> R.drawable.button_save_slot
+            LayoutComponent.BUTTON_LOAD_SLOT_1,
+            LayoutComponent.BUTTON_LOAD_SLOT_2,
+            LayoutComponent.BUTTON_LOAD_SLOT_3,
+            LayoutComponent.BUTTON_LOAD_SLOT_4,
+            LayoutComponent.BUTTON_LOAD_SLOT_5,
+            LayoutComponent.BUTTON_LOAD_SLOT_6,
+            LayoutComponent.BUTTON_LOAD_SLOT_7,
+            LayoutComponent.BUTTON_LOAD_SLOT_8,
+            LayoutComponent.BUTTON_LOAD_SLOT_9 -> R.drawable.button_load_slot
             else -> -1
         }
     }

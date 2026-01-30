@@ -6,6 +6,7 @@ import me.magnum.melonds.ui.common.LayoutComponentViewBuilderFactory
 import me.magnum.melonds.ui.common.componentbuilders.*
 import me.magnum.melonds.ui.emulator.input.componentbuilder.RuntimeScreenLayoutComponentViewBuilder
 import me.magnum.melonds.ui.emulator.input.componentbuilder.ToggleableSingleButtonLayoutComponentViewBuilder
+import me.magnum.melonds.ui.common.componentbuilders.TextDisplayLayoutComponentViewBuilder
 
 class RuntimeLayoutComponentViewBuilderFactory : LayoutComponentViewBuilderFactory {
     private val layoutComponentViewBuilderCache = mutableMapOf<LayoutComponent, LayoutComponentViewBuilder>()
@@ -20,6 +21,7 @@ class RuntimeLayoutComponentViewBuilderFactory : LayoutComponentViewBuilderFacto
                 LayoutComponent.BUTTON_FAST_FORWARD_TOGGLE,
                 LayoutComponent.BUTTON_MICROPHONE_TOGGLE,
                 LayoutComponent.BUTTON_TOGGLE_SOFT_INPUT -> ToggleableSingleButtonLayoutComponentViewBuilder(layoutComponent)
+                LayoutComponent.FRAME_COUNTER_DISPLAY -> TextDisplayLayoutComponentViewBuilder(layoutComponent)
                 else -> SingleButtonLayoutComponentViewBuilder(layoutComponent)
             }
 
